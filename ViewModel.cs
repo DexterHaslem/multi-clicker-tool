@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Windows.Controls;
 
@@ -16,9 +17,10 @@ namespace multi_clicker_tool
 
         private bool lastAllEnabled;
         private bool lastAllSelected;
+
         public bool? IsAllEnabled
         {
-            get 
+            get
             {
                 if (SavedClicks.All(c => c.IsEnabled))
                     return true;
@@ -27,7 +29,7 @@ namespace multi_clicker_tool
                 return null;
             }
             set
-            { 
+            {
                 foreach (var click in SavedClicks)
                 {
                     click.IsEnabled = !lastAllEnabled;
@@ -36,13 +38,12 @@ namespace multi_clicker_tool
             }
         }
 
-        internal void ListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            NotifyPropertyChanged("IsAllSelected");
-        }
+        public bool IsClearAllEnabled { get => SavedClicks.Count > 0; }
 
-        public bool? IsAllSelected 
-        { 
+        public bool IsDeleteClickEnabled { get => SavedClicks.Any(c => c.IsSelected); }
+
+        public bool? IsAllSelected
+        {
             get
             {
                 if (SavedClicks.All(c => c.IsSelected))
@@ -69,6 +70,7 @@ namespace multi_clicker_tool
             PlayPauseText = "Paused";
 
             SavedClicks = new ObservableCollection<SavedClick>();
+            SavedClicks.CollectionChanged += OnSavedClicksCollectionChanged;
             for (int i = 0; i < 25; ++i)
             {
                 var c = new SavedClick { X = i, Y = i };
@@ -77,9 +79,20 @@ namespace multi_clicker_tool
             }
         }
 
+        private void OnSavedClicksCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            NotifyPropertyChanged("IsClearAllEnabled");
+        }
+
         private void OnClickEnabledChanged(bool val)
         {
             NotifyPropertyChanged("IsAllEnabled");
+        }
+
+        public void ListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            NotifyPropertyChanged("IsAllSelected");
+            NotifyPropertyChanged("IsDeleteClickEnabled");
         }
     }
 }

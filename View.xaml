@@ -7,10 +7,12 @@
         mc:Ignorable="d"
         SnapsToDevicePixels="True"
         WindowStartupLocation="Manual"
-        Title="Multi clicker tool" Height="350" Width="500"  MinHeight="100"  MinWidth="100"
+        Title="Multi clicker tool" Height="350" Width="500"  MinHeight="200"  MinWidth="250"
         Loaded="Window_Loaded">
     <Grid Margin="2">
+        
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -21,7 +23,20 @@
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
-        <GroupBox Header="Saved clicks" Grid.Column="0" Grid.Row="0">
+        <Menu Grid.Row="0" Grid.ColumnSpan="2">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Load clicks from file.." />
+                <MenuItem Header="_Save clicks to file.." />
+                <Separator></Separator>
+                <MenuItem Header="E_xit"/>
+            </MenuItem>
+
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About"/>
+            </MenuItem>
+        </Menu>
+
+        <GroupBox Header="Saved clicks"  Grid.Row="1" Grid.Column="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -64,26 +79,7 @@
             </Grid>
         </GroupBox>
 
-        <Grid Grid.Row="1" Grid.Column="0" Margin="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition />
-                <ColumnDefinition />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            
-            <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="2">Delete Selected Click</Button>
-            <Button Grid.Row="1" Grid.Column="0" Margin="2">Load...</Button>
-            <Button Grid.Row="1"  Grid.Column="1"  Margin="2">Save...</Button>
-            <Button Grid.Row="1"  Grid.Column="2"  Margin="2">Clear</Button>
-        </Grid>
-
-        <Button Grid.Column="1" Grid.Row="1" Margin="2,4">Record click...</Button>
-
-        <GroupBox Grid.Column="1" Header="Click options">
+        <GroupBox Grid.Row="1" Grid.Column="1" Header="Click options">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition />
@@ -94,7 +90,18 @@
             </Grid>
         </GroupBox>
 
-        <StatusBar Grid.Row="2" Grid.ColumnSpan="2">
+        <Grid Grid.Row="2" Grid.Column="0" Margin="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"  Margin="2" Command="{Binding DeleteClicksCommand}" IsEnabled="{Binding IsDeleteClickEnabled}">Delete</Button>
+            <Button Grid.Column="1"  Margin="2" Command="{Binding ClearClicksCommand}" IsEnabled="{Binding IsClearAllEnabled}">Clear All</Button>
+        </Grid>
+
+        <Button Grid.Row="2" Grid.Column="1"  Margin="2,4">Record click...</Button>
+        
+        <StatusBar Grid.Row="3" Grid.ColumnSpan="2">
             <StatusBarItem HorizontalAlignment="Left">
                 <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="{Binding StatusText}"/>
             </StatusBarItem>
