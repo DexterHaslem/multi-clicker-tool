@@ -17,6 +17,7 @@ namespace multi_clicker_tool
         private string enableCheckText;
         private string playPauseText;
         private string statusText;
+        private bool isPlaying;
 
         public ObservableCollection<SavedClick> SavedClicks { get; private set; }
 
@@ -83,6 +84,7 @@ namespace multi_clicker_tool
                 NotifyPropertyChanged("IsAllSelected");
                 NotifyPropertyChanged("IsDeleteClickEnabled");
                 UpdateEnabledCheckboxText();
+                UpdateStatusBarText();
             }
         }
 
@@ -121,6 +123,7 @@ namespace multi_clicker_tool
             mainWindow.CommandBindings.Add(new CommandBinding(DeleteClicksCommand, OnDeleteClicksCommand));
 
             UpdateEnabledCheckboxText();
+            UpdateStatusBarText();
         }
 
         private void OnClearClicksCommand(object sender, ExecutedRoutedEventArgs e)
@@ -147,16 +150,19 @@ namespace multi_clicker_tool
         private void OnSavedClicksCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             NotifyPropertyChanged("IsClearAllEnabled");
+            UpdateEnabledCheckboxText();
+            UpdateStatusBarText();
         }
 
         private void OnClickEnabledChanged(bool val)
         {
             NotifyPropertyChanged("IsAllEnabled");
+            UpdateStatusBarText();
         }
 
         private void UpdateEnabledCheckboxText()
         {
-            var numSelected = SavedClicks.Where(c => c.IsSelected).Count();
+            var numSelected = SavedClicks.Count(c => c.IsSelected);
             bool isAll = numSelected == 0 || numSelected == SavedClicks.Count;
             EnableCheckText = "Toggle Enabled " + (isAll ? "(All)" : "(Sel)");
         }
@@ -170,6 +176,18 @@ namespace multi_clicker_tool
             */
             NotifyPropertyChanged("IsDeleteClickEnabled");
             UpdateEnabledCheckboxText();
+            UpdateStatusBarText();
+        }
+
+        private void UpdateStatusBarText()
+        {
+            StatusText = "";
+            if (SavedClicks.Count(c => c.IsSelected) > 0)
+                StatusText = $"Sel: {SavedClicks.Count(c => c.IsSelected)}, ";
+            
+            StatusText += $"{SavedClicks.Count(c => c.IsEnabled)} enabled";
+
+            PlayPauseText = isPlaying ? "PLAYING" : "PAUSED";
         }
     }
 }
