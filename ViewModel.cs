@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace multi_clicker_tool
 {
@@ -14,7 +15,6 @@ namespace multi_clicker_tool
 
         public string StatusText { get; set; }
         public string PlayPauseText { get; set; }
-
         private bool lastAllEnabled;
         private bool lastAllSelected;
 
@@ -62,6 +62,13 @@ namespace multi_clicker_tool
             }
         }
 
+        public RoutedCommand DeleteClicksCommand { get; private set; }
+        public RoutedCommand ClearClicksCommand { get; private set; }
+        public RoutedCommand LoadClicksCommand { get; private set; }
+        public RoutedCommand SaveClicksCommand { get; private set; }
+        public RoutedCommand ExitCommand { get; private set; }
+
+
         public ViewModel(MainWindow mainWindow)
         {
             this.mainWindow = mainWindow;
@@ -77,6 +84,39 @@ namespace multi_clicker_tool
                 c.EnabledChanged += OnClickEnabledChanged;
                 SavedClicks.Add(c);
             }
+
+            DeleteClicksCommand = new RoutedCommand("DeleteClicks", typeof(MainWindow));
+            ClearClicksCommand = new RoutedCommand("ClearClicks", typeof(MainWindow));
+            LoadClicksCommand = new RoutedCommand("LoadClicks", typeof(MainWindow));
+            SaveClicksCommand = new RoutedCommand("SaveClicks", typeof(MainWindow));
+            ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
+
+            mainWindow.CommandBindings.Add(new CommandBinding(ExitCommand, OnExitCommand));
+            mainWindow.CommandBindings.Add(new CommandBinding(ClearClicksCommand, OnClearClicksCommand));
+            mainWindow.CommandBindings.Add(new CommandBinding(LoadClicksCommand, OnLoadClicksCommand));
+            mainWindow.CommandBindings.Add(new CommandBinding(SaveClicksCommand, OnSaveClicksCommand));
+            mainWindow.CommandBindings.Add(new CommandBinding(DeleteClicksCommand, OnDeleteClicksCommand));
+        }
+
+        private void OnClearClicksCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+        }
+
+        private void OnLoadClicksCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+        }
+
+        private void OnSaveClicksCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+        }
+
+        private void OnDeleteClicksCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+        }
+
+        private void OnExitCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+            mainWindow.Close();
         }
 
         private void OnSavedClicksCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)

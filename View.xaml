@@ -25,10 +25,10 @@
 
         <Menu Grid.Row="0" Grid.ColumnSpan="2">
             <MenuItem Header="_File">
-                <MenuItem Header="_Load clicks from file.." />
-                <MenuItem Header="_Save clicks to file.." />
+                <MenuItem Header="_Load clicks from file.."  Command="{Binding LoadClicksCommand}"/>
+                <MenuItem Header="_Save clicks to file.."  Command="{Binding SaveClicksCommand}"/>
                 <Separator></Separator>
-                <MenuItem Header="E_xit"/>
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
             </MenuItem>
 
             <MenuItem Header="_Help">
