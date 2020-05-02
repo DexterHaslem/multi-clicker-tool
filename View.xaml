@@ -7,14 +7,14 @@
         mc:Ignorable="d"
         SnapsToDevicePixels="True"
         WindowStartupLocation="Manual"
-        Title="Multi clicker tool" Height="350" Width="500"  MinHeight="200"  MinWidth="250"
+        Title="Multi clicker tool" Height="350" Width="600"  MinHeight="300"  MinWidth="450"
         Loaded="Window_Loaded">
     <Grid Margin="2">
         
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="32"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -44,13 +44,15 @@
                 </Grid.RowDefinitions>
 
                 <CheckBox HorizontalAlignment="Left" HorizontalContentAlignment="Left" IsChecked="{Binding IsAllSelected}">Select all</CheckBox>
-                <CheckBox HorizontalAlignment="Right" HorizontalContentAlignment="Right" IsChecked="{Binding IsAllEnabled}">Enable all</CheckBox>
+                <CheckBox HorizontalAlignment="Right" HorizontalContentAlignment="Right" IsChecked="{Binding IsAllEnabled}">
+                    <TextBlock Text="{Binding EnableCheckText}"/>
+                </CheckBox>
                 
-                <ListBox SelectionChanged="ListBox_SelectionChanged" ItemsSource="{Binding SavedClicks}" Margin="2" Grid.Row="1" SelectionMode="Multiple">
+                <ListBox SelectionChanged="ListBox_SelectionChanged" ItemsSource="{Binding SavedClicks}" Margin="2" Grid.Row="1" SelectionMode="Extended">
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                            <Setter Property="IsSelected" Value="{Binding Mode=TwoWay, Path=IsSelected}"/>
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
                         </Style>
                     </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
@@ -72,7 +74,6 @@
 
                                 <CheckBox Grid.Column="4"  Margin="0,0,10,0" HorizontalAlignment="Right" IsChecked="{Binding IsEnabled}">Enabled</CheckBox>
                             </Grid>
-
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

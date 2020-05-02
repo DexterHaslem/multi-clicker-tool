@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,13 +12,18 @@ namespace multi_clicker_tool
     class ViewModel : BaseNotifyPropertyChanged
     {
         private MainWindow mainWindow;
+        private bool lastAllEnabled;
+        private bool lastAllSelected;
+        private string enableCheckText;
+        private string playPauseText;
+        private string statusText;
 
         public ObservableCollection<SavedClick> SavedClicks { get; private set; }
 
-        public string StatusText { get; set; }
-        public string PlayPauseText { get; set; }
-        private bool lastAllEnabled;
-        private bool lastAllSelected;
+        public string StatusText { get => statusText; set { statusText = value; NotifyPropertyChanged(); } }
+        public string PlayPauseText { get => playPauseText; set { playPauseText = value; NotifyPropertyChanged(); } }
+
+        public string EnableCheckText { get => enableCheckText; set { enableCheckText = value; NotifyPropertyChanged(); } }
 
         public bool? IsAllEnabled
         {
@@ -30,11 +37,24 @@ namespace multi_clicker_tool
             }
             set
             {
-                foreach (var click in SavedClicks)
+                // dont always unconditionally set em all. check selection first
+                var selectedClicks = SavedClicks.Where(c => c.IsSelected).ToList();
+                bool enableDisableAll = true;
+                IEnumerable<SavedClick> toToggle = SavedClicks;
+                if (selectedClicks.Count > 0)
                 {
-                    click.IsEnabled = !lastAllEnabled;
+                    toToggle = selectedClicks;
                 }
-                lastAllEnabled = !lastAllEnabled;
+
+                foreach (var click in toToggle)
+                {
+                    if (enableDisableAll)
+                        click.IsEnabled = !lastAllEnabled;
+                    else
+                        click.IsEnabled = !click.IsEnabled;
+                }
+                if (enableDisableAll)
+                    lastAllEnabled = !lastAllEnabled;
             }
         }
 
@@ -59,6 +79,10 @@ namespace multi_clicker_tool
                     click.IsSelected = !lastAllSelected;
                 }
                 lastAllSelected = !lastAllSelected;
+
+                NotifyPropertyChanged("IsAllSelected");
+                NotifyPropertyChanged("IsDeleteClickEnabled");
+                UpdateEnabledCheckboxText();
             }
         }
 
@@ -67,7 +91,6 @@ namespace multi_clicker_tool
         public RoutedCommand LoadClicksCommand { get; private set; }
         public RoutedCommand SaveClicksCommand { get; private set; }
         public RoutedCommand ExitCommand { get; private set; }
-
 
         public ViewModel(MainWindow mainWindow)
         {
@@ -96,6 +119,8 @@ namespace multi_clicker_tool
             mainWindow.CommandBindings.Add(new CommandBinding(LoadClicksCommand, OnLoadClicksCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(SaveClicksCommand, OnSaveClicksCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(DeleteClicksCommand, OnDeleteClicksCommand));
+
+            UpdateEnabledCheckboxText();
         }
 
         private void OnClearClicksCommand(object sender, ExecutedRoutedEventArgs e)
@@ -129,10 +154,22 @@ namespace multi_clicker_tool
             NotifyPropertyChanged("IsAllEnabled");
         }
 
+        private void UpdateEnabledCheckboxText()
+        {
+            var numSelected = SavedClicks.Where(c => c.IsSelected).Count();
+            bool isAll = numSelected == 0 || numSelected == SavedClicks.Count;
+            EnableCheckText = "Toggle Enabled " + (isAll ? "(All)" : "(Sel)");
+        }
+
         public void ListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            /* NOTE: do not use this event handler for full list update- i think item virtualization is making it fire for
+             * only visibile items, so it doesnt work correctly for large lists 
+            Debug.WriteLine($"ListBoxSElectionChanged {e.AddedItems.Count} : {e.RemovedItems.Count}");
             NotifyPropertyChanged("IsAllSelected");
+            */
             NotifyPropertyChanged("IsDeleteClickEnabled");
+            UpdateEnabledCheckboxText();
         }
     }
 }
