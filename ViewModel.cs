@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -18,12 +20,13 @@ namespace multi_clicker_tool
         private string playPauseText;
         private string statusText;
         private bool isPlaying;
-        private bool pendingClickRecord;
+        private int pendingClickRecord;
 
         private IntPtr mouseHookPtr;
         private IntPtr keyboardHookPtr;
         private NativeMethods.HookProc globalKeyboardHookDelegate;
         private NativeMethods.HookProc globalMouseHookDelegate;
+        private IntPtr user32 = NativeMethods.LoadLibrary("user32.dll");
 
         public ObservableCollection<SavedClick> SavedClicks { get; private set; }
 
@@ -133,34 +136,66 @@ namespace multi_clicker_tool
             UpdateEnabledCheckboxText();
             UpdateStatusBarText();
 
+            mainWindow.Closing += OnMainWindowClosing;
 
             globalKeyboardHookDelegate = KeyboardHookProc;
-            var user32 = NativeMethods.LoadLibrary("user32.dll");
-            keyboardHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_KEYBOARD_LL, globalKeyboardHookDelegate, user32, 0);
+            
+            keyboardHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_KEYBOARD, globalKeyboardHookDelegate, user32, 0);
+        }
 
-            globalMouseHookDelegate = MouseHookProc;
-            mouseHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_MOUSE_LL, globalMouseHookDelegate, user32, 0);
+        private void OnMainWindowClosing(object sender, CancelEventArgs e)
+        {
+            if (mouseHookPtr != IntPtr.Zero)
+            {
+                NativeMethods.UnhookWindowsHookEx(mouseHookPtr);
+                mouseHookPtr = IntPtr.Zero;
+            }
+            NativeMethods.UnhookWindowsHookEx(keyboardHookPtr);
+            keyboardHookPtr = IntPtr.Zero;
 
-            //UnhookWindowsHookEx(hook);
+            globalKeyboardHookDelegate = null;
+            globalMouseHookDelegate = null;
         }
 
         private IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
             Debug.WriteLine($"GLOBAL KEYBOARD HOOK: {code} {wParam} {lParam}");
-            //throw new NotImplementedException();
+            //throw new NotImplementedException();44456
             return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
 
         private IntPtr MouseHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
-            Debug.WriteLine($"GLOBAL MOUSE HOOK: {code} {wParam} {lParam}");
-            //throw new NotImplementedException();
+            if (code < 0)
+            {
+                return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+            }
+            //Debug.WriteLine($"GLOBAL MOUSE HOOK: {code} {wParam} {pendingClickRecord}");
+
+            if (NativeMethods.WM_LBUTTONDOWN == (uint)wParam)
+            {
+                NativeMethods.MSLLHOOKSTRUCT mouseData = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
+                // if its a left click, remove hook after we get one after our start click
+                //if (pendingClickRecord > 0)
+                //{
+                    NativeMethods.UnhookWindowsHookEx(mouseHookPtr);
+                    mouseHookPtr = IntPtr.Zero;
+                    Debug.WriteLine($"data {code} {wParam} - {mouseData.pt.X} {mouseData.pt.Y}");
+                //}
+
+                // tricky, as soon as we enable the hook on clicking the button, we get one fired from that click so we 
+                // need to ignore first hook
+                pendingClickRecord++;
+            }
             return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
 
         private void OnRecordClickCommand(object sender, ExecutedRoutedEventArgs e)
         {
-            pendingClickRecord = true;
+            pendingClickRecord = 0;
+            globalMouseHookDelegate = MouseHookProc;
+            // TODO: consider whether we need the LL hook for DPI aware crap
+            mouseHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_MOUSE_LL, globalMouseHookDelegate, user32, 0);
         }
 
         private void OnClearClicksCommand(object sender, ExecutedRoutedEventArgs e)

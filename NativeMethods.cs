@@ -55,7 +55,43 @@ namespace multi_clicker_tool
         public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true)]
-        static extern bool UnhookWindowsHookEx(IntPtr hhk);
+        public static extern bool UnhookWindowsHookEx(IntPtr hhk);
 
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Point
+        {
+            public int X;
+            public int Y;
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MSLLHOOKSTRUCT
+        {
+            public Point pt;
+            public int mouseData; // be careful, this must be ints, not uints (was wrong before I changed it...). regards, cmew.
+            public int flags;
+            public int time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MOUSEHOOKSTRUCT
+        {
+            public Point pt;
+            public IntPtr hwnd;
+            public uint wHitTestCode;
+            public IntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MouseHookStructEx
+        {
+            public MOUSEHOOKSTRUCT mouseHookStruct;
+            public int MouseData;
+        }
+
+        public const uint WM_LBUTTONDOWN = 0x0201;
     }
 }
