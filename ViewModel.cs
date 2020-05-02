@@ -18,6 +18,12 @@ namespace multi_clicker_tool
         private string playPauseText;
         private string statusText;
         private bool isPlaying;
+        private bool pendingClickRecord;
+
+        private IntPtr mouseHookPtr;
+        private IntPtr keyboardHookPtr;
+        private NativeMethods.HookProc globalKeyboardHookDelegate;
+        private NativeMethods.HookProc globalMouseHookDelegate;
 
         public ObservableCollection<SavedClick> SavedClicks { get; private set; }
 
@@ -92,6 +98,7 @@ namespace multi_clicker_tool
         public RoutedCommand ClearClicksCommand { get; private set; }
         public RoutedCommand LoadClicksCommand { get; private set; }
         public RoutedCommand SaveClicksCommand { get; private set; }
+        public RoutedCommand RecordClickCommand { get; private set; }
         public RoutedCommand ExitCommand { get; private set; }
 
         public ViewModel(MainWindow mainWindow)
@@ -114,6 +121,7 @@ namespace multi_clicker_tool
             ClearClicksCommand = new RoutedCommand("ClearClicks", typeof(MainWindow));
             LoadClicksCommand = new RoutedCommand("LoadClicks", typeof(MainWindow));
             SaveClicksCommand = new RoutedCommand("SaveClicks", typeof(MainWindow));
+            RecordClickCommand = new RoutedCommand("RecordClick", typeof(MainWindow));
             ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
 
             mainWindow.CommandBindings.Add(new CommandBinding(ExitCommand, OnExitCommand));
@@ -121,9 +129,38 @@ namespace multi_clicker_tool
             mainWindow.CommandBindings.Add(new CommandBinding(LoadClicksCommand, OnLoadClicksCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(SaveClicksCommand, OnSaveClicksCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(DeleteClicksCommand, OnDeleteClicksCommand));
-
+            mainWindow.CommandBindings.Add(new CommandBinding(RecordClickCommand, OnRecordClickCommand));
             UpdateEnabledCheckboxText();
             UpdateStatusBarText();
+
+
+            globalKeyboardHookDelegate = KeyboardHookProc;
+            var user32 = NativeMethods.LoadLibrary("user32.dll");
+            keyboardHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_KEYBOARD_LL, globalKeyboardHookDelegate, user32, 0);
+
+            globalMouseHookDelegate = MouseHookProc;
+            mouseHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_MOUSE_LL, globalMouseHookDelegate, user32, 0);
+
+            //UnhookWindowsHookEx(hook);
+        }
+
+        private IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
+        {
+            Debug.WriteLine($"GLOBAL KEYBOARD HOOK: {code} {wParam} {lParam}");
+            //throw new NotImplementedException();
+            return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+        }
+
+        private IntPtr MouseHookProc(int code, IntPtr wParam, IntPtr lParam)
+        {
+            Debug.WriteLine($"GLOBAL MOUSE HOOK: {code} {wParam} {lParam}");
+            //throw new NotImplementedException();
+            return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+        }
+
+        private void OnRecordClickCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+            pendingClickRecord = true;
         }
 
         private void OnClearClicksCommand(object sender, ExecutedRoutedEventArgs e)

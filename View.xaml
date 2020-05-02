@@ -6,8 +6,7 @@
         xmlns:local="clr-namespace:multi_clicker_tool"
         mc:Ignorable="d"
         SnapsToDevicePixels="True"
-        WindowStartupLocation="Manual"
-        Title="Multi clicker tool" Height="350" Width="600"  MinHeight="300"  MinWidth="450"
+        Title="Multi clicker tool" Height="400" Width="500"  MinHeight="300"  MinWidth="450"
         Loaded="Window_Loaded">
     <Grid Margin="2">
         
@@ -100,7 +99,7 @@
             <Button Grid.Column="1"  Margin="2" Command="{Binding ClearClicksCommand}" IsEnabled="{Binding IsClearAllEnabled}">Clear All</Button>
         </Grid>
 
-        <Button Grid.Row="2" Grid.Column="1"  Margin="2,4">Record click...</Button>
+        <Button Grid.Row="2" Grid.Column="1"  Margin="2,4" Command="{Binding RecordClickCommand}">Record click...</Button>
         
         <StatusBar Grid.Row="3" Grid.ColumnSpan="2">
             <StatusBarItem HorizontalAlignment="Left">
