@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -26,11 +27,23 @@ namespace multi_clicker_tool
         private IntPtr keyboardHookPtr;
         private NativeMethods.HookProc globalKeyboardHookDelegate;
         private NativeMethods.HookProc globalMouseHookDelegate;
-        private IntPtr user32 = NativeMethods.LoadLibrary("user32.dll");
+        private readonly IntPtr user32 = NativeMethods.LoadLibrary("user32.dll");
         private ClickRepeatType repeatMode;
         private int repeatCount;
+        private int delayMs;
+        private bool humanizeClicks;
+        private bool clickEditIsEnabled;
+        private string editSectionToolTip;
 
         public ObservableCollection<SavedClick> SavedClicks { get; private set; }
+
+        public int DelayMs { get => delayMs; set { delayMs = value; NotifyPropertyChanged(); } }
+
+        public bool ClickEditIsEnabled { get => clickEditIsEnabled; set { clickEditIsEnabled = value; NotifyPropertyChanged(); } }
+
+        public string EditSectionToolTip { get => editSectionToolTip; set { editSectionToolTip = value; NotifyPropertyChanged(); } }
+
+        public bool HumanizeClicks { get => humanizeClicks; set { humanizeClicks = value; NotifyPropertyChanged(); } }
 
         public ClickRepeatType RepeatMode { get => repeatMode; set { repeatMode = value; NotifyPropertyChanged(); } }
 
@@ -109,6 +122,8 @@ namespace multi_clicker_tool
         public RoutedCommand SaveClicksCommand { get; private set; }
         public RoutedCommand RecordClickCommand { get; private set; }
         public RoutedCommand ExitCommand { get; private set; }
+        public RoutedCommand SetHotkeyCommand { get; private set; }
+        public RoutedCommand ManualStartStopCommand { get; private set; }
 
         public ViewModel(MainWindow mainWindow)
         {
@@ -133,6 +148,8 @@ namespace multi_clicker_tool
             SaveClicksCommand = new RoutedCommand("SaveClicks", typeof(MainWindow));
             RecordClickCommand = new RoutedCommand("RecordClick", typeof(MainWindow));
             ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
+            SetHotkeyCommand = new RoutedCommand("SetHotkey", typeof(MainWindow));
+            ManualStartStopCommand = new RoutedCommand("ManualStartStop", typeof(MainWindow));
 
             mainWindow.CommandBindings.Add(new CommandBinding(ExitCommand, OnExitCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(ClearClicksCommand, OnClearClicksCommand));
@@ -140,24 +157,40 @@ namespace multi_clicker_tool
             mainWindow.CommandBindings.Add(new CommandBinding(SaveClicksCommand, OnSaveClicksCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(DeleteClicksCommand, OnDeleteClicksCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(RecordClickCommand, OnRecordClickCommand));
+            mainWindow.CommandBindings.Add(new CommandBinding(SetHotkeyCommand, OnSetHotkeyCommand));
+            mainWindow.CommandBindings.Add(new CommandBinding(ManualStartStopCommand, OnManualStartStopCommand));
             UpdateEnabledCheckboxText();
             UpdateStatusBarText();
 
             mainWindow.Closing += OnMainWindowClosing;
 
-            globalKeyboardHookDelegate = KeyboardHookProc;
+            SetupKeyboardHook();
 
-            //keyboardHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_KEYBOARD, globalKeyboardHookDelegate, user32, 0);
+            ToolTipService.ShowOnDisabledProperty.OverrideMetadata(typeof(Control), new FrameworkPropertyMetadata(true));
+        }
+
+        private void SetupKeyboardHook()
+        {
+            globalKeyboardHookDelegate = KeyboardHookProc;
+            keyboardHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_KEYBOARD_LL, globalKeyboardHookDelegate, user32, 0);
+        }
+
+        private void OnSetHotkeyCommand(object sender, ExecutedRoutedEventArgs e)
+        {
+        }
+
+        private void OnManualStartStopCommand(object sender, ExecutedRoutedEventArgs e)
+        {
         }
 
         private void OnMainWindowClosing(object sender, CancelEventArgs e)
         {
             if (mouseHookPtr != IntPtr.Zero)
-            {
                 NativeMethods.UnhookWindowsHookEx(mouseHookPtr);
-                mouseHookPtr = IntPtr.Zero;
-            }
-            NativeMethods.UnhookWindowsHookEx(keyboardHookPtr);
+            mouseHookPtr = IntPtr.Zero;
+
+            if (keyboardHookPtr != IntPtr.Zero)
+                NativeMethods.UnhookWindowsHookEx(keyboardHookPtr);
             keyboardHookPtr = IntPtr.Zero;
 
             globalKeyboardHookDelegate = null;
@@ -244,6 +277,12 @@ namespace multi_clicker_tool
             var numSelected = SavedClicks.Count(c => c.IsSelected);
             bool isAll = numSelected == 0 || numSelected == SavedClicks.Count;
             EnableCheckText = "Toggle Enabled " + (isAll ? "(All)" : "(Sel)");
+        }
+
+        private void UpdateEditSectionTextAndEnabled()
+        {
+            ClickEditIsEnabled = isPlaying;
+            EditSectionToolTip = isPlaying ? "cannot edit clicks while playing, pause first" : "";
         }
 
         public void ListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
