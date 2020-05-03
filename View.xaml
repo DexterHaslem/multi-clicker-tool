@@ -12,7 +12,6 @@
         <local:RepeatOptionRadioConverter x:Key="repeatOptionConverter" />
     </Window.Resources>
     <Grid Margin="2">
-        
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -25,6 +24,18 @@
             <ColumnDefinition Width="4*"/>
         </Grid.ColumnDefinitions>
 
+        <Popup x:Name="globalPopup"
+               Placement="MousePoint"
+               IsOpen="False"
+               StaysOpen="True">
+            <Border Width="100" 
+                    Height="100"
+                    Background="AntiqueWhite">
+
+                <Label Content="Test" />
+            </Border>
+        </Popup>
+        
         <Menu Grid.Row="0" Grid.ColumnSpan="2">
             <MenuItem Header="_File">
                 <MenuItem Header="_Load clicks from file.."  Command="{Binding LoadClicksCommand}"/>
@@ -50,11 +61,12 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
+                <!--
                 <CheckBox HorizontalAlignment="Left" HorizontalContentAlignment="Left" IsChecked="{Binding IsAllSelected}" ToolTip="{Binding EditSectionToolTip}">Select all</CheckBox>
                 <CheckBox HorizontalAlignment="Right" HorizontalContentAlignment="Right" IsChecked="{Binding IsAllEnabled}">
                     <TextBlock Text="{Binding EnableCheckText}" ToolTip="{Binding EditSectionToolTip}"/>
                 </CheckBox>
-                
+                -->
                 <ListBox SelectionChanged="ListBox_SelectionChanged" ItemsSource="{Binding SavedClicks}" Margin="2" Grid.Row="1" SelectionMode="Extended"
                          ToolTip="{Binding EditSectionToolTip}">
                     <ListBox.ItemContainerStyle>
@@ -141,7 +153,9 @@
 
         <Button Grid.Row="2" Grid.Column="1"  Margin="2,4" Command="{Binding RecordClickCommand}"
                 IsEnabled="{Binding IsRecordClickEnabled}"
-                ToolTip="Pause playback to record new click">Record click...</Button>
+                ToolTip="Pause playback to record new click">
+            <TextBlock Text="{Binding RecordingButtonText}" />
+        </Button>
         
         <StatusBar Grid.Row="3" Grid.ColumnSpan="2">
             <StatusBarItem HorizontalAlignment="Left">

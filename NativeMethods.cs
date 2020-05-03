@@ -92,6 +92,7 @@ namespace multi_clicker_tool
             public int MouseData;
         }
 
+        public const uint WM_MOUSEMOVE = 0x200;
         public const uint WM_LBUTTONDOWN = 0x0201;
         public const uint WM_KEYDOWN = 0x0100;
 
