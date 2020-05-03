@@ -93,5 +93,26 @@ namespace multi_clicker_tool
         }
 
         public const uint WM_LBUTTONDOWN = 0x0201;
+        public const uint WM_KEYDOWN = 0x0100;
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public class KBDLLHOOKSTRUCT
+        {
+            public uint vkCode;
+            public uint scanCode;
+            public KBDLLHOOKSTRUCTFlags flags;
+            public uint time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        [Flags]
+        public enum KBDLLHOOKSTRUCTFlags : uint
+        {
+            LLKHF_EXTENDED = 0x01,
+            LLKHF_INJECTED = 0x10,
+            LLKHF_ALTDOWN = 0x20,
+            LLKHF_UP = 0x80,
+        }
     }
 }

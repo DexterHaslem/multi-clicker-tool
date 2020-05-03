@@ -21,7 +21,8 @@ namespace multi_clicker_tool
         private string playPauseText;
         private string statusText;
         private bool isPlaying;
-        private int pendingClickRecord;
+
+        private bool isRecordingClick;
 
         private IntPtr mouseHookPtr;
         private IntPtr keyboardHookPtr;
@@ -32,14 +33,18 @@ namespace multi_clicker_tool
         private int repeatCount;
         private int delayMs;
         private bool humanizeClicks;
-        private bool clickEditIsEnabled;
         private string editSectionToolTip;
+        private string startStopButtonText;
+        private bool isRecordClickEnabled;
 
         public ObservableCollection<SavedClick> SavedClicks { get; private set; }
 
         public int DelayMs { get => delayMs; set { delayMs = value; NotifyPropertyChanged(); } }
 
-        public bool ClickEditIsEnabled { get => clickEditIsEnabled; set { clickEditIsEnabled = value; NotifyPropertyChanged(); } }
+        public bool IsRecordClickEnabled { get => isRecordClickEnabled; set { isRecordClickEnabled = value; NotifyPropertyChanged(); } }
+        public string StartStopButtonText { get => startStopButtonText; set { startStopButtonText = value; NotifyPropertyChanged(); } }
+        public bool IsManualStartStopEnabled { get => !isPlaying && !isRecordingClick; }
+        public bool ClickEditIsEnabled { get => !isPlaying && !isRecordingClick; }
 
         public string EditSectionToolTip { get => editSectionToolTip; set { editSectionToolTip = value; NotifyPropertyChanged(); } }
 
@@ -87,9 +92,9 @@ namespace multi_clicker_tool
             }
         }
 
-        public bool IsClearAllEnabled { get => SavedClicks.Count > 0; }
+        public bool IsClearAllEnabled { get => SavedClicks.Count > 0 && ClickEditIsEnabled; }
 
-        public bool IsDeleteClickEnabled { get => SavedClicks.Any(c => c.IsSelected); }
+        public bool IsDeleteClickEnabled { get => SavedClicks.Any(c => c.IsSelected) && ClickEditIsEnabled; }
 
         public bool? IsAllSelected
         {
@@ -111,8 +116,7 @@ namespace multi_clicker_tool
 
                 NotifyPropertyChanged("IsAllSelected");
                 NotifyPropertyChanged("IsDeleteClickEnabled");
-                UpdateEnabledCheckboxText();
-                UpdateStatusBarText();
+                UpdateAllUiState();
             }
         }
 
@@ -134,12 +138,15 @@ namespace multi_clicker_tool
 
             SavedClicks = new ObservableCollection<SavedClick>();
             SavedClicks.CollectionChanged += OnSavedClicksCollectionChanged;
+
+#if false
             for (int i = 0; i < 25; ++i)
             {
                 var c = new SavedClick { X = i, Y = i };
                 c.EnabledChanged += OnClickEnabledChanged;
                 SavedClicks.Add(c);
             }
+#endif
 
             RepeatMode = ClickRepeatType.Count;
             DeleteClicksCommand = new RoutedCommand("DeleteClicks", typeof(MainWindow));
@@ -159,8 +166,7 @@ namespace multi_clicker_tool
             mainWindow.CommandBindings.Add(new CommandBinding(RecordClickCommand, OnRecordClickCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(SetHotkeyCommand, OnSetHotkeyCommand));
             mainWindow.CommandBindings.Add(new CommandBinding(ManualStartStopCommand, OnManualStartStopCommand));
-            UpdateEnabledCheckboxText();
-            UpdateStatusBarText();
+            UpdateAllUiState();
 
             mainWindow.Closing += OnMainWindowClosing;
 
@@ -181,6 +187,16 @@ namespace multi_clicker_tool
 
         private void OnManualStartStopCommand(object sender, ExecutedRoutedEventArgs e)
         {
+            TogglePlayPause();
+        }
+
+        private void TogglePlayPause()
+        {
+            if (isRecordingClick)
+                return;
+
+            isPlaying = !isPlaying;
+            UpdateAllUiState();
         }
 
         private void OnMainWindowClosing(object sender, CancelEventArgs e)
@@ -199,43 +215,53 @@ namespace multi_clicker_tool
 
         private IntPtr KeyboardHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
-            Debug.WriteLine($"GLOBAL KEYBOARD HOOK: {code} {wParam} {lParam}");
             //throw new NotImplementedException();44456
+            if (!isRecordingClick && code >= 0 && wParam == (IntPtr)NativeMethods.WM_KEYDOWN)
+            {
+                NativeMethods.KBDLLHOOKSTRUCT kbd = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
+                Debug.WriteLine($"GLOBAL KEYBOARD HOOK keydown: vkCode = {kbd.vkCode} {kbd.time}");
+            }
             return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
 
         private IntPtr MouseHookProc(int code, IntPtr wParam, IntPtr lParam)
         {
-            if (code < 0)
+            if (code >= 0)
             {
-                return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
-            }
-            //Debug.WriteLine($"GLOBAL MOUSE HOOK: {code} {wParam} {pendingClickRecord}");
+                //Debug.WriteLine($"GLOBAL MOUSE HOOK: {code} {wParam} {pendingClickRecord}");
+                if (isRecordingClick && NativeMethods.WM_LBUTTONDOWN == (uint)wParam)
+                {
+                    NativeMethods.MSLLHOOKSTRUCT mouseData = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
+                    Debug.WriteLine($"data {code} {wParam} - {mouseData.pt.X} {mouseData.pt.Y}");
 
-            if (NativeMethods.WM_LBUTTONDOWN == (uint)wParam)
+                    var nc = new SavedClick { IsEnabled = true, X = mouseData.pt.X, Y = mouseData.pt.Y };
+                    SavedClicks.Add(nc);
+
+                    isRecordingClick = false;
+                    NotifyPropertyChanged("ClickEditIsEnabled");
+                    NotifyPropertyChanged("IsManualStartStopEnabled");
+                }
+            }
+
+            if (!isRecordingClick)
             {
-                NativeMethods.MSLLHOOKSTRUCT mouseData = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
-                // if its a left click, remove hook after we get one after our start click
-                //if (pendingClickRecord > 0)
-                //{
                 NativeMethods.UnhookWindowsHookEx(mouseHookPtr);
                 mouseHookPtr = IntPtr.Zero;
-                Debug.WriteLine($"data {code} {wParam} - {mouseData.pt.X} {mouseData.pt.Y}");
-                //}
-
-                // tricky, as soon as we enable the hook on clicking the button, we get one fired from that click so we 
-                // need to ignore first hook
-                pendingClickRecord++;
             }
             return NativeMethods.CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
         }
 
         private void OnRecordClickCommand(object sender, ExecutedRoutedEventArgs e)
         {
-            pendingClickRecord = 0;
+            if (isRecordingClick || isPlaying)
+                return;
+
             globalMouseHookDelegate = MouseHookProc;
             // TODO: consider whether we need the LL hook for DPI aware crap
             mouseHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_MOUSE_LL, globalMouseHookDelegate, user32, 0);
+            isRecordingClick = true;
+            NotifyPropertyChanged("ClickEditIsEnabled");
+            NotifyPropertyChanged("IsManualStartStopEnabled");
         }
 
         private void OnClearClicksCommand(object sender, ExecutedRoutedEventArgs e)
@@ -261,28 +287,26 @@ namespace multi_clicker_tool
 
         private void OnSavedClicksCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            if (e.NewItems != null)
+            {
+                foreach (SavedClick savedClick in e.NewItems)
+                    savedClick.EnabledChanged += OnClickEnabledChanged;
+            }
+            if (e.OldItems != null)
+            {
+                foreach (SavedClick removedClick in e.OldItems)
+                    removedClick.EnabledChanged -= OnClickEnabledChanged;
+            }
+
             NotifyPropertyChanged("IsClearAllEnabled");
-            UpdateEnabledCheckboxText();
-            UpdateStatusBarText();
+            NotifyPropertyChanged("IsDeleteClickEnabled");
+            UpdateAllUiState();
         }
 
         private void OnClickEnabledChanged(bool val)
         {
             NotifyPropertyChanged("IsAllEnabled");
-            UpdateStatusBarText();
-        }
-
-        private void UpdateEnabledCheckboxText()
-        {
-            var numSelected = SavedClicks.Count(c => c.IsSelected);
-            bool isAll = numSelected == 0 || numSelected == SavedClicks.Count;
-            EnableCheckText = "Toggle Enabled " + (isAll ? "(All)" : "(Sel)");
-        }
-
-        private void UpdateEditSectionTextAndEnabled()
-        {
-            ClickEditIsEnabled = isPlaying;
-            EditSectionToolTip = isPlaying ? "cannot edit clicks while playing, pause first" : "";
+            UpdateAllUiState();
         }
 
         public void ListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -293,12 +317,16 @@ namespace multi_clicker_tool
             NotifyPropertyChanged("IsAllSelected");
             */
             NotifyPropertyChanged("IsDeleteClickEnabled");
-            UpdateEnabledCheckboxText();
-            UpdateStatusBarText();
+            UpdateAllUiState();
         }
 
-        private void UpdateStatusBarText()
+        private void UpdateAllUiState()
         {
+            var numSelected = SavedClicks.Count(c => c.IsSelected);
+            bool isAll = numSelected == 0 || numSelected == SavedClicks.Count;
+            EnableCheckText = "Toggle Enabled " + (isAll ? "(All)" : "(Sel)");
+
+            EditSectionToolTip = isPlaying ? "cannot edit clicks while playing, pause first" : "";
             StatusText = "";
             if (SavedClicks.Count(c => c.IsSelected) > 0)
                 StatusText = $"Sel: {SavedClicks.Count(c => c.IsSelected)}, ";
@@ -306,6 +334,8 @@ namespace multi_clicker_tool
             StatusText += $"{SavedClicks.Count(c => c.IsEnabled)} enabled";
 
             PlayPauseText = isPlaying ? "PLAYING" : "PAUSED";
+            StartStopButtonText = isPlaying ? "Pause" : "Play";
+            isRecordClickEnabled = !isPlaying;
         }
     }
 }

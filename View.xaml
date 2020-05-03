@@ -122,9 +122,9 @@
                     <TextBlock>Start/stop Hotkey:</TextBlock>
                     <TextBlock Margin="4,0" Text="{Binding HotkeyText}" />
                 </StackPanel>
-                <Button Margin="4" Command="{Binding SetHotkeyCommand}">Change hotkey</Button>
+                <Button Margin="4" Command="{Binding SetHotkeyCommand}" IsEnabled="{Binding IsManualStartStopEnabled}">Change hotkey</Button>
 
-                <Button Margin="4" Command="{Binding ManualStartStopCommand}">
+                <Button Margin="4" Command="{Binding ManualStartStopCommand}" IsEnabled="{Binding IsManualStartStopEnabled}">
                     <TextBlock Text="{Binding StartStopButtonText}" />
                 </Button>
             </StackPanel>
@@ -139,7 +139,9 @@
             <Button Grid.Column="1"  Margin="2" Command="{Binding ClearClicksCommand}" IsEnabled="{Binding IsClearAllEnabled}">Clear All</Button>
         </Grid>
 
-        <Button Grid.Row="2" Grid.Column="1"  Margin="2,4" Command="{Binding RecordClickCommand}">Record click...</Button>
+        <Button Grid.Row="2" Grid.Column="1"  Margin="2,4" Command="{Binding RecordClickCommand}"
+                IsEnabled="{Binding IsRecordClickEnabled}"
+                ToolTip="Pause playback to record new click">Record click...</Button>
         
         <StatusBar Grid.Row="3" Grid.ColumnSpan="2">
             <StatusBarItem HorizontalAlignment="Left">
