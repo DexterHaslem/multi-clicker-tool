@@ -55,6 +55,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="ViewModel.cs" />

@@ -60,6 +60,12 @@ namespace multi_clicker_tool
 
     }
 
-    
+    public enum ClickRepeatType
+    {
+        Unknown,
+        Once,
+        Forever,
+        Count
+    }
 
 }

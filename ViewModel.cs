@@ -27,8 +27,14 @@ namespace multi_clicker_tool
         private NativeMethods.HookProc globalKeyboardHookDelegate;
         private NativeMethods.HookProc globalMouseHookDelegate;
         private IntPtr user32 = NativeMethods.LoadLibrary("user32.dll");
+        private ClickRepeatType repeatMode;
+        private int repeatCount;
 
         public ObservableCollection<SavedClick> SavedClicks { get; private set; }
+
+        public ClickRepeatType RepeatMode { get => repeatMode; set { repeatMode = value; NotifyPropertyChanged(); } }
+
+        public int RepeatCount { get => repeatCount; set { repeatCount = value; NotifyPropertyChanged(); } }
 
         public string StatusText { get => statusText; set { statusText = value; NotifyPropertyChanged(); } }
         public string PlayPauseText { get => playPauseText; set { playPauseText = value; NotifyPropertyChanged(); } }
@@ -120,6 +126,7 @@ namespace multi_clicker_tool
                 SavedClicks.Add(c);
             }
 
+            RepeatMode = ClickRepeatType.Count;
             DeleteClicksCommand = new RoutedCommand("DeleteClicks", typeof(MainWindow));
             ClearClicksCommand = new RoutedCommand("ClearClicks", typeof(MainWindow));
             LoadClicksCommand = new RoutedCommand("LoadClicks", typeof(MainWindow));
@@ -139,8 +146,8 @@ namespace multi_clicker_tool
             mainWindow.Closing += OnMainWindowClosing;
 
             globalKeyboardHookDelegate = KeyboardHookProc;
-            
-            keyboardHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_KEYBOARD, globalKeyboardHookDelegate, user32, 0);
+
+            //keyboardHookPtr = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_KEYBOARD, globalKeyboardHookDelegate, user32, 0);
         }
 
         private void OnMainWindowClosing(object sender, CancelEventArgs e)
@@ -178,9 +185,9 @@ namespace multi_clicker_tool
                 // if its a left click, remove hook after we get one after our start click
                 //if (pendingClickRecord > 0)
                 //{
-                    NativeMethods.UnhookWindowsHookEx(mouseHookPtr);
-                    mouseHookPtr = IntPtr.Zero;
-                    Debug.WriteLine($"data {code} {wParam} - {mouseData.pt.X} {mouseData.pt.Y}");
+                NativeMethods.UnhookWindowsHookEx(mouseHookPtr);
+                mouseHookPtr = IntPtr.Zero;
+                Debug.WriteLine($"data {code} {wParam} - {mouseData.pt.X} {mouseData.pt.Y}");
                 //}
 
                 // tricky, as soon as we enable the hook on clicking the button, we get one fired from that click so we 
@@ -256,7 +263,7 @@ namespace multi_clicker_tool
             StatusText = "";
             if (SavedClicks.Count(c => c.IsSelected) > 0)
                 StatusText = $"Sel: {SavedClicks.Count(c => c.IsSelected)}, ";
-            
+
             StatusText += $"{SavedClicks.Count(c => c.IsEnabled)} enabled";
 
             PlayPauseText = isPlaying ? "PLAYING" : "PAUSED";

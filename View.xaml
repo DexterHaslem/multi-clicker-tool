@@ -8,6 +8,9 @@
         SnapsToDevicePixels="True"
         Title="Multi clicker tool" Height="400" Width="500"  MinHeight="300"  MinWidth="450"
         Loaded="Window_Loaded">
+    <Window.Resources>
+        <local:RepeatOptionRadioConverter x:Key="repeatOptionConverter" />
+    </Window.Resources>
     <Grid Margin="2">
         
         <Grid.RowDefinitions>
@@ -18,8 +21,8 @@
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5*"/>
             <ColumnDefinition Width="4*"/>
-            <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
 
         <Menu Grid.Row="0" Grid.ColumnSpan="2">
@@ -95,14 +98,35 @@
         </GroupBox>
 
         <GroupBox Grid.Row="1" Grid.Column="1" Header="Click options">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-            </Grid>
+            <StackPanel Margin="2">
+                <TextBlock Grid.Row="0" Grid.Column="0" Margin="2">Repeat click list:</TextBlock>
+                <RadioButton Margin="2" GroupName="RepeatOptions" IsChecked="{Binding RepeatMode, Converter={StaticResource repeatOptionConverter},ConverterParameter=Once}">Once</RadioButton>
+                <RadioButton Margin="2" GroupName="RepeatOptions" IsChecked="{Binding RepeatMode, Converter={StaticResource repeatOptionConverter},ConverterParameter=Forever}">Forever</RadioButton>
+                <RadioButton Margin="2" GroupName="RepeatOptions" IsChecked="{Binding RepeatMode, Converter={StaticResource repeatOptionConverter},ConverterParameter=Count}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Margin="2">Count:</TextBlock>
+                        <TextBox Width="45" Text="{Binding RepeatCount}" IsEnabled="{Binding Path=IsChecked, 
+                            RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type RadioButton}}}"  Margin="2"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Margin="2">Delay between clicks (ms)</TextBlock>
+                    <TextBox Width="45" Margin="2" Text="{Binding DelayMs}"/>
+                </StackPanel>
+                
+                <CheckBox IsChecked="{Binding HumanizeClicks}" ToolTip="Add random ~25-90ms delay between clicks">Humanize delay</CheckBox>
+
+                <StackPanel Orientation="Horizontal" Margin="2">
+                    <TextBlock>Start/stop Hotkey:</TextBlock>
+                    <TextBlock Margin="4,0" Text="{Binding HotkeyText}" />
+                </StackPanel>
+                <Button Margin="4" Command="{Binding SetHotkeyCommand}">Change hotkey</Button>
+
+                <Button Margin="4" Command="{Binding ManualStartStopCommand}">
+                    <TextBlock Text="{Binding StartStopButtonText}" />
+                </Button>
+            </StackPanel>
         </GroupBox>
 
         <Grid Grid.Row="2" Grid.Column="0" Margin="2">
