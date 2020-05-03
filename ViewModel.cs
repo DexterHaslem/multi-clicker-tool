@@ -31,7 +31,8 @@ namespace multi_clicker_tool
         private ClickRepeatType repeatMode;
         private int repeatCount;
         private int delayMs;
-        private bool humanizeClicks;
+        private bool humanizeClicksDelay;
+        private bool humanizeClicksLocation;
         private string editSectionToolTip;
         private string startStopButtonText;
         private bool isRecordClickEnabled;
@@ -57,7 +58,9 @@ namespace multi_clicker_tool
 
         public string EditSectionToolTip { get => editSectionToolTip; set { editSectionToolTip = value; NotifyPropertyChanged(); } }
 
-        public bool HumanizeClicks { get => humanizeClicks; set { humanizeClicks = value; NotifyPropertyChanged(); } }
+        public bool HumanizeClicksDelay { get => humanizeClicksDelay; set { humanizeClicksDelay = value; NotifyPropertyChanged(); } }
+
+        public bool HumanizeClicksLocation { get => humanizeClicksLocation; set { humanizeClicksLocation = value; NotifyPropertyChanged(); } }
 
         public ClickRepeatType RepeatMode { get => repeatMode; set { repeatMode = value; NotifyPropertyChanged(); } }
 
@@ -100,7 +103,10 @@ namespace multi_clicker_tool
             }
 #endif
 
-            RepeatMode = ClickRepeatType.Count;
+            RepeatMode = ClickRepeatType.Forever;
+            RepeatCount = 100;
+            DelayMs = 550;
+
             DeleteClicksCommand = new RoutedCommand("DeleteClicks", typeof(MainWindow));
             ClearClicksCommand = new RoutedCommand("ClearClicks", typeof(MainWindow));
             LoadClicksCommand = new RoutedCommand("LoadClicks", typeof(MainWindow));
