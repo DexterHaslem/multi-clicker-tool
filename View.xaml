@@ -18,8 +18,8 @@
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
+            <ColumnDefinition Width="4*"/>
+            <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
 
         <Menu Grid.Row="0" Grid.ColumnSpan="2">
@@ -41,6 +41,11 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition />
                 </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
                 <CheckBox HorizontalAlignment="Left" HorizontalContentAlignment="Left" IsChecked="{Binding IsAllSelected}">Select all</CheckBox>
                 <CheckBox HorizontalAlignment="Right" HorizontalContentAlignment="Right" IsChecked="{Binding IsAllEnabled}">
@@ -76,6 +81,16 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+
+                <Grid Grid.Row="1" Grid.Column="1" Margin="2,50">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <Button Height="28" Margin="2,5">Up</Button>
+                    <Button Grid.Row="1" Height="28" Margin="2,5">Down</Button>
+                </Grid>
             </Grid>
         </GroupBox>
 
