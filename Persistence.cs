@@ -27,18 +27,15 @@ namespace multi_clicker_tool
         public SavedClick[] Clicks { get; set; }
 
 
-        public static string Serialize<T>(this T value) where T : Persistence
+        public  string Serialize()
         {
-            if (value == null)
-                return string.Empty;
-
             try
             {
-                var xmlserializer = new XmlSerializer(typeof(T));
+                var xmlserializer = new XmlSerializer(typeof(Persistence));
                 var stringWriter = new StringWriter();
                 using (var writer = XmlWriter.Create(stringWriter))
                 {
-                    xmlserializer.Serialize(writer, value);
+                    xmlserializer.Serialize(writer, this);
                     return stringWriter.ToString();
                 }
             }
