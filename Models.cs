@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace multi_clicker_tool
 {
@@ -19,6 +20,7 @@ namespace multi_clicker_tool
 
     public delegate void EnabledChangedHandler(bool v);
 
+    [System.SerializableAttribute]
     public class SavedClick : BaseNotifyPropertyChanged
     {
         private int x;

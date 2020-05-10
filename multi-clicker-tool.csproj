@@ -58,6 +58,7 @@
     <Compile Include="Converters.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="Persistence.cs" />
     <Compile Include="ViewModel.cs" />
     <Page Include="View.xaml">
       <Generator>MSBuild:Compile</Generator>
